@@ -11,6 +11,8 @@ from .detector import (
     failure_rate,
     is_consistent,
 )
+from .engine import FlakeReport, evaluate
+from .store import HistoryStore, SqliteHistoryStore
 
 __all__ = [
     "Verdict",
@@ -20,4 +22,8 @@ __all__ = [
     "WINDOW",
     "FLAKE_THRESHOLD",
     "MIN_RUNS",
+    "evaluate",
+    "FlakeReport",
+    "HistoryStore",
+    "SqliteHistoryStore",
 ]
