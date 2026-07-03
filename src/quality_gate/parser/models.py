@@ -35,6 +35,8 @@ FAILING = (Status.FAILED, Status.ERROR)
 class TestResult:
     """One test's outcome in one run. Immutable value object."""
 
+    __test__ = False  # domain model, not a pytest test case (name collides with Test* convention)
+
     id: str            # stable identity across runs: "classname::name" — flake-history key
     name: str
     classname: str
@@ -53,6 +55,8 @@ class TestResult:
 @dataclass
 class TestRun:
     """All results from a single test run, plus convenience aggregates."""
+
+    __test__ = False  # domain model, not a pytest test case (name collides with Test* convention)
 
     results: list[TestResult] = field(default_factory=list)
 
