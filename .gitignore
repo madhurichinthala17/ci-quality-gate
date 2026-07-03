@@ -1,0 +1,48 @@
+# ---- Virtual environments ----
+.venv/
+venv/
+env/
+
+# ---- Python bytecode / caches ----
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# ---- Test / coverage / reports (generated artifacts) ----
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+junit.xml
+report.xml
+results.xml
+allure-results/
+allure-report/
+
+# ---- Quality-gate runtime state ----
+*.db
+*.sqlite
+*.sqlite3
+gate-report.json
+.gate-cache/
+
+# ---- Secrets / local config ----
+.env
+.env.*
+!.env.example
+
+# ---- Local-only docs (not for the public repo) ----
+DESIGN.md
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
