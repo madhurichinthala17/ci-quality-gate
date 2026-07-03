@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="patient_api" tests="3" failures="0" errors="0" skipped="0" time="0.412">
+    <testcase classname="tests.test_patient" name="test_create_patient" time="0.101"/>
+    <testcase classname="tests.test_patient" name="test_read_patient" time="0.088"/>
+    <testcase classname="tests.test_patient" name="test_search_by_name" time="0.223"/>
+  </testsuite>
+</testsuites>

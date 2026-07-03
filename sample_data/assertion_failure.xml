@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="patient_api" tests="3" failures="1" errors="0" skipped="0" time="0.398">
+    <testcase classname="tests.test_patient" name="test_create_patient" time="0.099"/>
+    <testcase classname="tests.test_patient" name="test_read_patient" time="0.091">
+      <failure message="assert 404 == 200" type="AssertionError">tests/test_patient.py:42: in test_read_patient
+    assert response.status_code == 200
+E   assert 404 == 200</failure>
+    </testcase>
+    <testcase classname="tests.test_patient" name="test_search_by_name" time="0.208"/>
+  </testsuite>
+</testsuites>

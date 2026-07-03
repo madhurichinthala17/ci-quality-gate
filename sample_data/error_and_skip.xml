@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites>
+  <testsuite name="patient_api" tests="3" failures="0" errors="1" skipped="1" time="5.512">
+    <testcase classname="tests.test_patient" name="test_create_patient" time="0.102"/>
+    <testcase classname="tests.test_patient" name="test_bulk_import" time="5.400">
+      <error message="TimeoutError: request exceeded 5s" type="TimeoutError">tests/test_patient.py:88: in test_bulk_import
+    client.bulk_import(records)
+E   TimeoutError: request exceeded 5s</error>
+    </testcase>
+    <testcase classname="tests.test_patient" name="test_legacy_endpoint" time="0.000">
+      <skipped message="deprecated endpoint" type="pytest.skip">Skipped: deprecated endpoint</skipped>
+    </testcase>
+  </testsuite>
+</testsuites>
