@@ -6,8 +6,10 @@ deterministic gate). Grounded, bounded, provider-swappable, cost-capped.
 
 from __future__ import annotations
 
+from .claude import ClaudeProvider
 from .config import TriageConfig
 from .models import CostSummary, Ticket, TriageCategory, TriageReport
+from .openai import OpenAIProvider
 from .provider import FakeProvider, LLMProvider, LLMResponse, estimate_cost
 from .triage import triage_tests
 
@@ -20,6 +22,8 @@ __all__ = [
     "LLMProvider",
     "LLMResponse",
     "FakeProvider",
+    "ClaudeProvider",
+    "OpenAIProvider",
     "estimate_cost",
     "triage_tests",
 ]
