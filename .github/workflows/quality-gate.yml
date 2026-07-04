@@ -22,29 +22,36 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install pytest pytest-cov
+        run: pip install pytest pytest-cov allure-pytest
 
-      # Persist flake history across runs. A unique key saves a fresh cache each
-      # run; restore-keys pulls the most recent previous one — the canonical way
-      # to carry a mutating file forward. Without this, flake detection would
-      # start from an empty window every run.
-      - name: Restore flake history
+      # Persist mutating gate state (flake history + metrics history) across runs.
+      # A unique key saves a fresh cache each run; restore-keys pulls the most
+      # recent previous one. Without this, flake windows and the metrics trend
+      # would reset every run.
+      - name: Restore gate state
         uses: actions/cache@v4
         with:
-          path: gate-history.db
-          key: flake-history-${{ github.run_id }}
-          restore-keys: flake-history-
+          path: |
+            gate-history.db
+            metrics-history.json
+          key: gate-state-${{ github.run_id }}
+          restore-keys: gate-state-
 
-      # Produce junit.xml + coverage.xml. Do NOT fail the job on a test failure —
-      # the gate is the decision-maker and needs the report even when tests fail.
+      # Produce junit.xml + coverage.xml + Allure results. Do NOT fail the job on
+      # a test failure — the gate is the decision-maker and needs the report.
       - name: Run tests
         continue-on-error: true
-        run: pytest --junitxml=junit.xml --cov=quality_gate --cov-report=xml:coverage.xml
+        run: >
+          pytest --alluredir=allure-results
+          --junitxml=junit.xml
+          --cov=quality_gate --cov-report=xml:coverage.xml
 
       # The gate decides pass/fail and exits non-zero on FAIL, turning the PR
-      # check red. Triage runs offline (fake). To use real Claude, set
-      # --provider claude and add ANTHROPIC_API_KEY as a repository secret
-      # (exposed here as an env var).
+      # check red. Triage runs offline (fake) so CI is green without secrets.
+      # To use a real LLM, set --provider openai (or claude), add the matching
+      # secret (OPENAI_API_KEY / ANTHROPIC_API_KEY), and expose it here, e.g.:
+      #   env:
+      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       - name: Quality gate
         run: |
           python -m quality_gate \
@@ -53,7 +60,10 @@ jobs:
             --history gate-history.db \
             --report gate-report.json \
             --triage --provider fake \
-            --triage-report triage-report.json
+            --triage-report triage-report.json \
+            --allure-dir allure-results \
+            --metrics-history metrics-history.json \
+            --trend-report allure-results/metrics-trend.html
 
       - name: Upload reports
         if: always()
@@ -65,6 +75,7 @@ jobs:
             coverage.xml
             gate-report.json
             triage-report.json
+            allure-results
 
       # File remediation tickets as GitHub Issues (deduped). Runs even if the gate
       # failed, so the failures that blocked the PR get tickets.
@@ -73,3 +84,40 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python -m quality_gate.issues triage-report.json
+
+  # Publishes the Allure report (with historical trends) + the metrics-trend page
+  # to GitHub Pages. Only on pushes to the default branch — not on PRs.
+  # SETUP (one-time): enable GitHub Pages for the repo with source = gh-pages
+  # branch. The gh-pages branch is created automatically on the first run.
+  # Community actions are pinned loosely; verify versions on first use.
+  publish-dashboard:
+    needs: quality-gate
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # push to gh-pages
+    steps:
+      - name: Download reports
+        uses: actions/download-artifact@v4
+        with:
+          name: quality-gate-reports
+          path: reports
+
+      - name: Generate Allure report (merging history)
+        uses: simple-elf/allure-report-action@master
+        with:
+          allure_results: reports/allure-results
+          gh_pages: gh-pages
+          allure_history: allure-history
+          keep_reports: 20
+
+      - name: Include the metrics-trend page
+        run: cp reports/allure-results/metrics-trend.html allure-history/ 2>/dev/null || true
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
+          keep_files: true

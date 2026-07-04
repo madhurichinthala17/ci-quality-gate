@@ -27,11 +27,14 @@ class LLMProvider(Protocol):
     def complete(self, system: str, user: str) -> LLMResponse: ...
 
 
-# USD per 1,000,000 tokens: (input, output).
+# USD per 1,000,000 tokens: (input, output). OpenAI values are approximate —
+# verify against current OpenAI pricing before relying on the dollar figures.
 PRICES: dict[str, tuple[float, float]] = {
     "fake-1": (0.0, 0.0),
     "claude-opus-4-8": (5.0, 25.0),
     "claude-haiku-4-5": (1.0, 5.0),
+    "gpt-4o-mini": (0.15, 0.60),
+    "gpt-4o": (2.50, 10.00),
 }
 
 

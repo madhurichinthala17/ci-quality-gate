@@ -41,22 +41,29 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="Run LLM triage on failing tests and write remediation tickets.")
     p.add_argument("--provider", choices=["fake", "claude", "openai"], default="fake",
                    help="Triage LLM provider (default: fake, offline).")
-    p.add_argument("--triage-model", default=TriageConfig.model,
-                   help="Model id for the claude/openai providers.")
+    p.add_argument("--triage-model", default=None,
+                   help="Model id for claude/openai; defaults to the provider's own default.")
     p.add_argument("--max-cost-usd", type=float, default=TriageConfig.max_cost_usd,
                    help="Per-run triage cost cap in USD.")
     p.add_argument("--triage-report", default="triage-report.json",
                    help="Where to write the triage tickets JSON.")
+    # Dashboard (optional — writes Allure environment + metrics trend)
+    p.add_argument("--allure-dir",
+                   help="Allure results dir to write dashboard metrics into (enables the dashboard).")
+    p.add_argument("--metrics-history", default="metrics-history.json",
+                   help="Rolling release-metrics history JSON.")
+    p.add_argument("--trend-report", default="metrics-trend.html",
+                   help="Companion metrics-trend HTML page.")
     return p
 
 
-def _make_provider(name: str, model: str) -> LLMProvider:
+def _make_provider(name: str, model: str | None) -> LLMProvider:
     if name == "claude":
         from .triage import ClaudeProvider
-        return ClaudeProvider(model)
+        return ClaudeProvider(model) if model else ClaudeProvider()
     if name == "openai":
         from .triage import OpenAIProvider
-        return OpenAIProvider(model)
+        return OpenAIProvider(model) if model else OpenAIProvider()
     from .triage import FakeProvider
     return FakeProvider()
 
@@ -101,10 +108,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.triage:
         provider = _make_provider(args.provider, args.triage_model)
-        tconfig = TriageConfig(model=args.triage_model, max_cost_usd=args.max_cost_usd)
+        tconfig = TriageConfig(max_cost_usd=args.max_cost_usd)  # model comes from the provider
         triage_report = triage_tests(run.failing, provider, tconfig)
         Path(args.triage_report).write_text(json.dumps(triage_report.to_dict(), indent=2))
         _print_triage(triage_report)
+
+    if args.allure_dir:
+        from .dashboard import publish
+        publish(report, args.allure_dir, args.metrics_history, args.trend_report)
+        print(f"Dashboard: metrics written to {args.allure_dir} + {args.trend_report}")
 
     # Exit-code contract: FAIL blocks the CI job; PASS/WARN allow it. Triage never affects this.
     return 1 if report.blocked else 0
