@@ -47,6 +47,6 @@ def test_all_skipped_is_healthy():
 
 
 def test_is_consistent_gates_quarantine_exit():
-    assert is_consistent([P] * 10)                            # recovered
-    assert is_consistent([F] * 10)                            # regressed
+    assert is_consistent([P] * 10)  # recovered
+    assert is_consistent([F] * 10)  # regressed
     assert not is_consistent([F, P, P, P, P, P, P, P, P, P])  # still flapping

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from quality_gate.triage.models import TriageCategory
 from quality_gate.triage.prompt import parse_ticket
 from quality_gate.triage.provider import FakeProvider, estimate_cost
-from quality_gate.triage.models import TriageCategory
 
 
 def test_fake_provider_classifies_timeout():

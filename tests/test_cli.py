@@ -12,10 +12,14 @@ SAMPLE = Path(__file__).resolve().parent.parent / "sample_data"
 
 def _invoke(tmp_path, junit, extra=None):
     argv = [
-        "--junit", str(SAMPLE / junit),
-        "--coverage", str(SAMPLE / "coverage.xml"),
-        "--history", str(tmp_path / "h.db"),
-        "--report", str(tmp_path / "r.json"),
+        "--junit",
+        str(SAMPLE / junit),
+        "--coverage",
+        str(SAMPLE / "coverage.xml"),
+        "--history",
+        str(tmp_path / "h.db"),
+        "--report",
+        str(tmp_path / "r.json"),
         *(extra or []),
     ]
     rc = main(argv)

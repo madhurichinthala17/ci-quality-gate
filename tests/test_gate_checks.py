@@ -21,8 +21,10 @@ P, F = Status.PASSED, Status.FAILED
 
 def _run(*specs: tuple[str, Status]) -> TestRun:
     return TestRun(
-        [TestResult(id=i, name=i, classname="t", suite="s", status=s, duration=0.0)
-         for i, s in specs]
+        [
+            TestResult(id=i, name=i, classname="t", suite="s", status=s, duration=0.0)
+            for i, s in specs
+        ]
     )
 
 
@@ -34,15 +36,21 @@ def test_coverage_pass_fail_and_warn_when_missing():
 
 def test_failures_block_unless_quarantined():
     run = _run(("t::a", F))
-    assert check_failures(run, FlakeReport()).status is Verdict.FAIL            # real failure blocks
-    assert check_failures(run, FlakeReport(quarantined={"t::a"})).status is Verdict.WARN  # suppressed
+    assert check_failures(run, FlakeReport()).status is Verdict.FAIL  # real failure blocks
+    assert (
+        check_failures(run, FlakeReport(quarantined={"t::a"})).status is Verdict.WARN
+    )  # suppressed
     assert check_failures(_run(("t::a", P)), FlakeReport()).status is Verdict.PASS
 
 
 def test_flake_rate_limit_is_20_percent():
     run = _run(("t::a", P), ("t::b", P), ("t::c", P), ("t::d", P), ("t::e", P))
-    assert check_flake_rate(run, FlakeReport(quarantined={"t::a"}), CFG).status is Verdict.PASS       # 20% == limit
-    assert check_flake_rate(run, FlakeReport(quarantined={"t::a", "t::b"}), CFG).status is Verdict.FAIL  # 40%
+    assert (
+        check_flake_rate(run, FlakeReport(quarantined={"t::a"}), CFG).status is Verdict.PASS
+    )  # 20% == limit
+    assert (
+        check_flake_rate(run, FlakeReport(quarantined={"t::a", "t::b"}), CFG).status is Verdict.FAIL
+    )  # 40%
 
 
 def test_count_escapes_counts_pass_to_fail_transitions():

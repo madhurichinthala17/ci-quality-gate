@@ -11,8 +11,11 @@ P, F = Status.PASSED, Status.FAILED
 def _run(test_id: str, status: Status) -> TestRun:
     classname, name = test_id.split("::")
     return TestRun(
-        [TestResult(id=test_id, name=name, classname=classname, suite="s",
-                    status=status, duration=0.0)]
+        [
+            TestResult(
+                id=test_id, name=name, classname=classname, suite="s", status=status, duration=0.0
+            )
+        ]
     )
 
 
@@ -54,7 +57,7 @@ def test_thin_evidence_does_not_quarantine(tmp_path):
 
 def test_quarantined_stays_until_consistent_then_releases(tmp_path):
     store = SqliteHistoryStore(tmp_path / "h.db")
-    _drive(store, "t::a", [P] * 8 + [F, F])          # quarantined at 20%
+    _drive(store, "t::a", [P] * 8 + [F, F])  # quarantined at 20%
     # 9 more passes: the window's failure rate dips to ~10% but a fail remains,
     # so it stays quarantined — this is the anti-flapping property.
     still = _drive(store, "t::a", [P] * 9)

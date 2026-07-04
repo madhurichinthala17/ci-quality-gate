@@ -30,41 +30,79 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--history", default="gate-history.db", help="SQLite history DB path.")
     p.add_argument("--build-id", help="Identifier for this build (optional).")
     p.add_argument("--report", default="gate-report.json", help="Where to write the JSON verdict.")
-    p.add_argument("--min-coverage", type=float, default=GateConfig.min_coverage,
-                   help="Minimum line coverage %% (below this the gate FAILs).")
-    p.add_argument("--max-flake-rate", type=float, default=GateConfig.max_flake_rate,
-                   help="Max fraction of the suite quarantined before the gate FAILs.")
-    p.add_argument("--max-escape-rate", type=float, default=GateConfig.max_escape_rate,
-                   help="Defect-escape rate above which the gate WARNs.")
+    p.add_argument(
+        "--min-coverage",
+        type=float,
+        default=GateConfig.min_coverage,
+        help="Minimum line coverage %% (below this the gate FAILs).",
+    )
+    p.add_argument(
+        "--max-flake-rate",
+        type=float,
+        default=GateConfig.max_flake_rate,
+        help="Max fraction of the suite quarantined before the gate FAILs.",
+    )
+    p.add_argument(
+        "--max-escape-rate",
+        type=float,
+        default=GateConfig.max_escape_rate,
+        help="Defect-escape rate above which the gate WARNs.",
+    )
     # Triage (advisory — never changes the verdict or exit code)
-    p.add_argument("--triage", action="store_true",
-                   help="Run LLM triage on failing tests and write remediation tickets.")
-    p.add_argument("--provider", choices=["fake", "claude", "openai"], default="fake",
-                   help="Triage LLM provider (default: fake, offline).")
-    p.add_argument("--triage-model", default=None,
-                   help="Model id for claude/openai; defaults to the provider's own default.")
-    p.add_argument("--max-cost-usd", type=float, default=TriageConfig.max_cost_usd,
-                   help="Per-run triage cost cap in USD.")
-    p.add_argument("--triage-report", default="triage-report.json",
-                   help="Where to write the triage tickets JSON.")
+    p.add_argument(
+        "--triage",
+        action="store_true",
+        help="Run LLM triage on failing tests and write remediation tickets.",
+    )
+    p.add_argument(
+        "--provider",
+        choices=["fake", "claude", "openai"],
+        default="fake",
+        help="Triage LLM provider (default: fake, offline).",
+    )
+    p.add_argument(
+        "--triage-model",
+        default=None,
+        help="Model id for claude/openai; defaults to the provider's own default.",
+    )
+    p.add_argument(
+        "--max-cost-usd",
+        type=float,
+        default=TriageConfig.max_cost_usd,
+        help="Per-run triage cost cap in USD.",
+    )
+    p.add_argument(
+        "--triage-report",
+        default="triage-report.json",
+        help="Where to write the triage tickets JSON.",
+    )
     # Dashboard (optional — writes Allure environment + metrics trend)
-    p.add_argument("--allure-dir",
-                   help="Allure results dir to write dashboard metrics into (enables the dashboard).")
-    p.add_argument("--metrics-history", default="metrics-history.json",
-                   help="Rolling release-metrics history JSON.")
-    p.add_argument("--trend-report", default="metrics-trend.html",
-                   help="Companion metrics-trend HTML page.")
+    p.add_argument(
+        "--allure-dir",
+        help="Allure results dir to write dashboard metrics into (enables the dashboard).",
+    )
+    p.add_argument(
+        "--metrics-history",
+        default="metrics-history.json",
+        help="Rolling release-metrics history JSON.",
+    )
+    p.add_argument(
+        "--trend-report", default="metrics-trend.html", help="Companion metrics-trend HTML page."
+    )
     return p
 
 
 def _make_provider(name: str, model: str | None) -> LLMProvider:
     if name == "claude":
         from .triage import ClaudeProvider
+
         return ClaudeProvider(model) if model else ClaudeProvider()
     if name == "openai":
         from .triage import OpenAIProvider
+
         return OpenAIProvider(model) if model else OpenAIProvider()
     from .triage import FakeProvider
+
     return FakeProvider()
 
 
@@ -79,8 +117,10 @@ def _print_summary(report: GateReport) -> None:
 
 
 def _print_triage(tr: TriageReport) -> None:
-    line = (f"Triage ({tr.cost.provider}/{tr.cost.model}): {len(tr.tickets)} ticket(s), "
-            f"{tr.cost.calls} call(s), ${tr.cost.usd:.4f}")
+    line = (
+        f"Triage ({tr.cost.provider}/{tr.cost.model}): {len(tr.tickets)} ticket(s), "
+        f"{tr.cost.calls} call(s), ${tr.cost.usd:.4f}"
+    )
     if tr.degraded:
         line += f"  [degraded: {tr.degraded_reason}]"
     print(line)
@@ -115,6 +155,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.allure_dir:
         from .dashboard import publish
+
         publish(report, args.allure_dir, args.metrics_history, args.trend_report)
         print(f"Dashboard: metrics written to {args.allure_dir} + {args.trend_report}")
 

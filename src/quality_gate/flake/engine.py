@@ -19,10 +19,10 @@ from .store import HistoryStore
 
 @dataclass
 class FlakeReport:
-    quarantined: set[str] = field(default_factory=set)         # all currently quarantined
-    newly_quarantined: set[str] = field(default_factory=set)   # entered this build
-    released: set[str] = field(default_factory=set)            # exited this build
-    regressions: set[str] = field(default_factory=set)         # consistent failures — must block
+    quarantined: set[str] = field(default_factory=set)  # all currently quarantined
+    newly_quarantined: set[str] = field(default_factory=set)  # entered this build
+    released: set[str] = field(default_factory=set)  # exited this build
+    regressions: set[str] = field(default_factory=set)  # consistent failures — must block
     verdicts: dict[str, Verdict] = field(default_factory=dict)  # per-test classification
 
 

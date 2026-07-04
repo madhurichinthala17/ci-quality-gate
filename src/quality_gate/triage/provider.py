@@ -52,22 +52,38 @@ class FakeProvider:
     def complete(self, system: str, user: str) -> LLMResponse:
         text = user.lower()
         if "timeout" in text:
-            cat, cause, step = ("timeout", "the operation exceeded its time limit",
-                                "increase the timeout or optimize the slow call")
+            cat, cause, step = (
+                "timeout",
+                "the operation exceeded its time limit",
+                "increase the timeout or optimize the slow call",
+            )
         elif "assert" in text:
-            cat, cause, step = ("assertion", "an assertion did not hold",
-                                "compare expected vs actual and fix the logic or the test")
+            cat, cause, step = (
+                "assertion",
+                "an assertion did not hold",
+                "compare expected vs actual and fix the logic or the test",
+            )
         elif "connection" in text or "dependency" in text:
-            cat, cause, step = ("dependency", "an external dependency was unavailable",
-                                "check the dependency and add a retry or a health check")
+            cat, cause, step = (
+                "dependency",
+                "an external dependency was unavailable",
+                "check the dependency and add a retry or a health check",
+            )
         else:
-            cat, cause, step = ("unknown", "insufficient information in the failure text",
-                                "review the failure manually")
-        payload = json.dumps({
-            "category": cat,
-            "probable_cause": cause,
-            "suggested_next_step": step,
-            "grounded": cat != "unknown",
-        })
+            cat, cause, step = (
+                "unknown",
+                "insufficient information in the failure text",
+                "review the failure manually",
+            )
+        payload = json.dumps(
+            {
+                "category": cat,
+                "probable_cause": cause,
+                "suggested_next_step": step,
+                "grounded": cat != "unknown",
+            }
+        )
         # rough offline token estimate (~4 chars/token); real providers report exact usage
-        return LLMResponse(payload, input_tokens=len(system + user) // 4, output_tokens=len(payload) // 4)
+        return LLMResponse(
+            payload, input_tokens=len(system + user) // 4, output_tokens=len(payload) // 4
+        )

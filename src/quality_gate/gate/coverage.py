@@ -14,7 +14,7 @@ from xml.etree.ElementTree import parse as et_parse
 
 @dataclass(frozen=True)
 class Coverage:
-    line_rate: float    # 0..1
+    line_rate: float  # 0..1
     branch_rate: float  # 0..1
 
     @property

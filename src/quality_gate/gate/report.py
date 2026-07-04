@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class Verdict(str, Enum):
+class Verdict(StrEnum):
     PASS = "pass"
     WARN = "warn"
     FAIL = "fail"

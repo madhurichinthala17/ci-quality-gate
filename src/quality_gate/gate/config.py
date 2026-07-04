@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class GateConfig:
-    min_coverage: float = 80.0     # percent; below this the coverage check FAILs
-    max_flake_rate: float = 0.20   # fraction of the suite quarantined; above this FAILs
+    min_coverage: float = 80.0  # percent; below this the coverage check FAILs
+    max_flake_rate: float = 0.20  # fraction of the suite quarantined; above this FAILs
     max_escape_rate: float = 0.10  # defect-escape rate above this WARNs
-    escape_window: int = 20        # builds considered when computing the escape rate
+    escape_window: int = 20  # builds considered when computing the escape rate

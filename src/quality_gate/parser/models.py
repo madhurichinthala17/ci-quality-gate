@@ -9,10 +9,10 @@ mapping its native representation onto this model, so adding a new format
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     """A test's outcome, normalized across formats.
 
     Every adapter maps its native representation onto exactly one of these.
@@ -20,8 +20,8 @@ class Status(str, Enum):
     """
 
     PASSED = "passed"
-    FAILED = "failed"    # an assertion failed — the product produced a wrong result
-    ERROR = "error"      # the test crashed / could not complete (timeout, exception)
+    FAILED = "failed"  # an assertion failed — the product produced a wrong result
+    ERROR = "error"  # the test crashed / could not complete (timeout, exception)
     SKIPPED = "skipped"  # did not run — excluded from flake and pass-rate math
 
 
@@ -37,15 +37,15 @@ class TestResult:
 
     __test__ = False  # domain model, not a pytest test case (name collides with Test* convention)
 
-    id: str            # stable identity across runs: "classname::name" — flake-history key
+    id: str  # stable identity across runs: "classname::name" — flake-history key
     name: str
     classname: str
     suite: str
     status: Status
-    duration: float                 # seconds
-    message: str | None = None      # short summary, e.g. "assert 404 == 200"
-    detail: str | None = None       # full text / stack trace (untrusted — bound before LLM)
-    type: str | None = None         # exception / failure type, e.g. "AssertionError"
+    duration: float  # seconds
+    message: str | None = None  # short summary, e.g. "assert 404 == 200"
+    detail: str | None = None  # full text / stack trace (untrusted — bound before LLM)
+    type: str | None = None  # exception / failure type, e.g. "AssertionError"
 
     @property
     def failing(self) -> bool:

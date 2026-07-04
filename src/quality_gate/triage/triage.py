@@ -12,7 +12,7 @@ from dataclasses import replace
 
 from ..parser.models import TestResult
 from .config import TriageConfig
-from .models import TriageReport
+from .models import Ticket, TriageReport
 from .prompt import build_prompt, parse_ticket
 from .provider import LLMProvider, estimate_cost
 
@@ -31,7 +31,7 @@ def triage_tests(
     report = TriageReport()
     report.cost.provider = provider.name
     report.cost.model = provider.model
-    seen: dict[str, object] = {}  # signature -> Ticket (dedupe cache)
+    seen: dict[str, Ticket] = {}  # signature -> Ticket (dedupe cache)
 
     for i, test in enumerate(tests):
         signature = _signature(test)

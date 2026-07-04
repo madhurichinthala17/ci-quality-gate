@@ -46,7 +46,9 @@ def test_error_and_skip_are_distinct_and_skip_is_not_failing():
 def test_same_test_flips_across_runs():
     # sets up the flake demo: identical id, different outcome across builds
     passed = next(r for r in parse_report(SAMPLE / "all_pass.xml").results if r.id == READ_PATIENT)
-    failed = next(r for r in parse_report(SAMPLE / "assertion_failure.xml").results if r.id == READ_PATIENT)
+    failed = next(
+        r for r in parse_report(SAMPLE / "assertion_failure.xml").results if r.id == READ_PATIENT
+    )
     assert passed.status is Status.PASSED
     assert failed.status is Status.FAILED
 

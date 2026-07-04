@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .gate.report import GateReport
@@ -34,7 +34,7 @@ def metrics_from_gate(report: GateReport) -> Metrics:
     """Extract the three dashboard metrics from the gate's check results."""
     by_name = {c.name: c.metrics for c in report.checks}
     return Metrics(
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         coverage_pct=by_name.get("coverage", {}).get("line_pct", 0.0),
         flake_rate=by_name.get("flake_rate", {}).get("flake_rate", 0.0),
         escape_rate=by_name.get("defect_escape", {}).get("escape_rate", 0.0),

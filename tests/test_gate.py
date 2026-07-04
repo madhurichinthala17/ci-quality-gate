@@ -12,8 +12,10 @@ GOOD_COV = Coverage(0.90, 0.85)
 
 def _run(*specs: tuple[str, Status]) -> TestRun:
     return TestRun(
-        [TestResult(id=i, name=i, classname="t", suite="s", status=s, duration=0.0)
-         for i, s in specs]
+        [
+            TestResult(id=i, name=i, classname="t", suite="s", status=s, duration=0.0)
+            for i, s in specs
+        ]
     )
 
 

@@ -16,11 +16,14 @@ from quality_gate.gate.report import CheckResult, GateReport, Verdict
 
 
 def _report(cov: float, flake: float, escape: float) -> GateReport:
-    return GateReport(Verdict.PASS, [
-        CheckResult("coverage", Verdict.PASS, "", {"line_pct": cov}),
-        CheckResult("flake_rate", Verdict.PASS, "", {"flake_rate": flake}),
-        CheckResult("defect_escape", Verdict.PASS, "", {"escape_rate": escape}),
-    ])
+    return GateReport(
+        Verdict.PASS,
+        [
+            CheckResult("coverage", Verdict.PASS, "", {"line_pct": cov}),
+            CheckResult("flake_rate", Verdict.PASS, "", {"flake_rate": flake}),
+            CheckResult("defect_escape", Verdict.PASS, "", {"escape_rate": escape}),
+        ],
+    )
 
 
 def test_metrics_extracted_from_gate():
@@ -46,10 +49,12 @@ def test_environment_properties_written(tmp_path):
 
 def test_trend_page_embeds_data(tmp_path):
     out = tmp_path / "trend.html"
-    write_trend_page(str(out), [{"timestamp": "t", "coverage_pct": 90, "flake_rate": 0, "escape_rate": 0}])
+    write_trend_page(
+        str(out), [{"timestamp": "t", "coverage_pct": 90, "flake_rate": 0, "escape_rate": 0}]
+    )
     html = out.read_text()
-    assert "Chart" in html          # chart library referenced
-    assert "coverage_pct" in html   # data embedded
+    assert "Chart" in html  # chart library referenced
+    assert "coverage_pct" in html  # data embedded
 
 
 def test_publish_writes_all_three_artifacts(tmp_path):

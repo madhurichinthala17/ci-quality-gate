@@ -9,7 +9,7 @@ change.
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
 
@@ -47,11 +47,11 @@ CREATE TABLE IF NOT EXISTS quarantine (
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class SqliteHistoryStore:
-    """SQLite-backed history. File-based and zero-infra — just a single file on disk. Implements the HistoryStore interface."""
+    """SQLite-backed history — a single file on disk. Implements HistoryStore."""
 
     def __init__(self, db_path: str | Path = "gate-history.db") -> None:
         self._conn = sqlite3.connect(str(db_path))
@@ -61,7 +61,7 @@ class SqliteHistoryStore:
     def close(self) -> None:
         self._conn.close()
 
-    def __enter__(self) -> "SqliteHistoryStore":
+    def __enter__(self) -> SqliteHistoryStore:
         return self
 
     def __exit__(self, *exc: object) -> None:
@@ -74,7 +74,8 @@ class SqliteHistoryStore:
             "INSERT INTO builds(build_id, ts) VALUES (?, ?)",
             (build_id or f"build-{ts}", ts),
         )
-        build_ord = int(cur.lastrowid)
+        build_ord = cur.lastrowid
+        assert build_ord is not None  # SQLite sets lastrowid after an INSERT
         self._conn.executemany(
             "INSERT INTO test_runs(build, test_id, status) VALUES (?, ?, ?)",
             [(build_ord, r.id, r.status.value) for r in run.results],

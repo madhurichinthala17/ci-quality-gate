@@ -9,13 +9,24 @@ from quality_gate.triage.provider import LLMResponse
 
 def _fail(test_id: str, type_: str, message: str) -> TestResult:
     c, n = test_id.split("::")
-    return TestResult(id=test_id, name=n, classname=c, suite="s", status=Status.FAILED,
-                      duration=0.0, message=message, detail=message, type=type_)
+    return TestResult(
+        id=test_id,
+        name=n,
+        classname=c,
+        suite="s",
+        status=Status.FAILED,
+        duration=0.0,
+        message=message,
+        detail=message,
+        type=type_,
+    )
 
 
 def test_produces_one_ticket_per_test():
-    tests = [_fail("t::a", "TimeoutError", "timed out"),
-             _fail("t::b", "AssertionError", "assert 1 == 2")]
+    tests = [
+        _fail("t::a", "TimeoutError", "timed out"),
+        _fail("t::b", "AssertionError", "assert 1 == 2"),
+    ]
     report = triage_tests(tests, FakeProvider())
     assert not report.degraded
     cats = {t.test_id: t.category for t in report.tickets}
@@ -26,8 +37,7 @@ def test_produces_one_ticket_per_test():
 
 def test_dedupes_identical_failures():
     # same type + message -> one LLM call, two tickets (reused per test_id)
-    tests = [_fail("t::a", "TimeoutError", "timed out"),
-             _fail("t::b", "TimeoutError", "timed out")]
+    tests = [_fail("t::a", "TimeoutError", "timed out"), _fail("t::b", "TimeoutError", "timed out")]
     report = triage_tests(tests, FakeProvider())
     assert report.cost.calls == 1
     assert report.cost.deduped == 1
@@ -41,14 +51,17 @@ class _PricyProvider:
 
     def complete(self, system: str, user: str) -> LLMResponse:
         # ~$6 per call at Opus prices -> exceeds a small cap immediately
-        return LLMResponse('{"category":"unknown","probable_cause":"c","suggested_next_step":"s","grounded":false}',
-                           input_tokens=200_000, output_tokens=200_000)
+        return LLMResponse(
+            '{"category":"unknown","probable_cause":"c","suggested_next_step":"s","grounded":false}',
+            input_tokens=200_000,
+            output_tokens=200_000,
+        )
 
 
 def test_cost_cap_skips_remaining():
     tests = [_fail("t::a", "E", "one"), _fail("t::b", "E", "two"), _fail("t::c", "E", "three")]
     report = triage_tests(tests, _PricyProvider(), TriageConfig(max_cost_usd=0.50))
-    assert report.cost.calls == 1              # only the first call happened
+    assert report.cost.calls == 1  # only the first call happened
     assert report.skipped == ["t::b", "t::c"]  # cap stopped the rest
 
 

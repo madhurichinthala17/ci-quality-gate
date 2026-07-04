@@ -9,17 +9,24 @@ from quality_gate.triage.prompt import build_prompt, parse_ticket
 
 def _failing(detail: str = "boom", type_: str = "AssertionError") -> TestResult:
     return TestResult(
-        id="t::a", name="a", classname="t", suite="s",
-        status=Status.FAILED, duration=0.0, message="m", detail=detail, type=type_,
+        id="t::a",
+        name="a",
+        classname="t",
+        suite="s",
+        status=Status.FAILED,
+        duration=0.0,
+        message="m",
+        detail=detail,
+        type=type_,
     )
 
 
 def test_prompt_bounds_and_delimits_untrusted_output():
     system, user = build_prompt(_failing(detail="x" * 5000), char_limit=2000)
-    assert user.count("x") == 2000                       # detail truncated
-    assert "BEGIN_UNTRUSTED_TEST_OUTPUT" in user         # delimited
-    assert "only" in system.lower()                      # grounding instruction present
-    assert "do not decide" not in user.lower()           # sanity: instruction lives in system
+    assert user.count("x") == 2000  # detail truncated
+    assert "BEGIN_UNTRUSTED_TEST_OUTPUT" in user  # delimited
+    assert "only" in system.lower()  # grounding instruction present
+    assert "do not decide" not in user.lower()  # sanity: instruction lives in system
 
 
 def test_parse_valid_json():

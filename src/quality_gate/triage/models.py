@@ -9,15 +9,15 @@ the failure text doesn't contain enough to classify — the model must not inven
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 
-class TriageCategory(str, Enum):
-    ASSERTION = "assertion"      # the product produced a wrong result (an assertion failed)
-    TIMEOUT = "timeout"          # the test timed out or ran too slow
+class TriageCategory(StrEnum):
+    ASSERTION = "assertion"  # the product produced a wrong result (an assertion failed)
+    TIMEOUT = "timeout"  # the test timed out or ran too slow
     ENVIRONMENT = "environment"  # infrastructure / config / setup problem
-    DEPENDENCY = "dependency"    # an external service or dependency failed
-    UNKNOWN = "unknown"          # not enough information to classify (ungrounded)
+    DEPENDENCY = "dependency"  # an external service or dependency failed
+    UNKNOWN = "unknown"  # not enough information to classify (ungrounded)
 
 
 @dataclass(frozen=True)
@@ -47,7 +47,7 @@ class CostSummary:
     provider: str = ""
     model: str = ""
     calls: int = 0
-    deduped: int = 0        # failures skipped because an identical one was already triaged
+    deduped: int = 0  # failures skipped because an identical one was already triaged
     input_tokens: int = 0
     output_tokens: int = 0
     usd: float = 0.0
@@ -76,7 +76,7 @@ class TriageReport:
 
     tickets: list[Ticket] = field(default_factory=list)
     cost: CostSummary = field(default_factory=CostSummary)
-    skipped: list[str] = field(default_factory=list)   # test_ids not triaged (cost cap hit)
+    skipped: list[str] = field(default_factory=list)  # test_ids not triaged (cost cap hit)
     degraded: bool = False
     degraded_reason: str | None = None
 

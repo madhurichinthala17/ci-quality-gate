@@ -18,4 +18,6 @@ def test_empty_tickets_is_noop(tmp_path):
 
 
 def test_issue_title_format():
-    assert _issue_title({"test_id": "t::a", "category": "timeout"}) == "[quality-gate] t::a (timeout)"
+    assert (
+        _issue_title({"test_id": "t::a", "category": "timeout"}) == "[quality-gate] t::a (timeout)"
+    )

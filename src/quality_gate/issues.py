@@ -30,7 +30,9 @@ def _existing_open_titles() -> set[str]:
     try:
         out = subprocess.run(
             ["gh", "issue", "list", "--state", "open", "--limit", "200", "--json", "title"],
-            capture_output=True, text=True, check=True,
+            capture_output=True,
+            text=True,
+            check=True,
         ).stdout
         return {i["title"] for i in json.loads(out or "[]")}
     except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError):
