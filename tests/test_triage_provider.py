@@ -21,5 +21,5 @@ def test_fake_provider_unknown_when_no_signal():
 
 def test_estimate_cost():
     assert estimate_cost("fake-1", 1000, 1000) == 0.0
-    # 1M input @ $5 + 1M output @ $25 = $30
-    assert estimate_cost("claude-opus-4-8", 1_000_000, 1_000_000) == 30.0
+    # 1M input @ $2.50 + 1M output @ $10 = $12.50
+    assert estimate_cost("gpt-4o", 1_000_000, 1_000_000) == 12.50

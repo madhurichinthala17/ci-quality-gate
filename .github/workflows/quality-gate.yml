@@ -48,10 +48,8 @@ jobs:
 
       # The gate decides pass/fail and exits non-zero on FAIL, turning the PR
       # check red. Triage runs offline (fake) so CI is green without secrets.
-      # To use a real LLM, set --provider openai (or claude), add the matching
-      # secret (OPENAI_API_KEY / ANTHROPIC_API_KEY), and expose it here, e.g.:
-      #   env:
-      #     OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      # Triage uses OpenAI when --provider openai is set. To enable it in CI, add
+      # an OPENAI_API_KEY repository secret; it is already exposed on this step.
       - name: Quality gate
         run: |
           python -m quality_gate \

@@ -47,10 +47,10 @@ def test_dedupes_identical_failures():
 
 class _PricyProvider:
     name = "pricy"
-    model = "claude-opus-4-8"
+    model = "gpt-4o"
 
     def complete(self, system: str, user: str) -> LLMResponse:
-        # ~$6 per call at Opus prices -> exceeds a small cap immediately
+        # ~$2.50 per call at gpt-4o prices -> exceeds a small cap immediately
         return LLMResponse(
             '{"category":"unknown","probable_cause":"c","suggested_next_step":"s","grounded":false}',
             input_tokens=200_000,

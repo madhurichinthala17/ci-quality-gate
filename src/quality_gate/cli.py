@@ -56,14 +56,14 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--provider",
-        choices=["fake", "claude", "openai"],
+        choices=["fake", "openai"],
         default="fake",
         help="Triage LLM provider (default: fake, offline).",
     )
     p.add_argument(
         "--triage-model",
         default=None,
-        help="Model id for claude/openai; defaults to the provider's own default.",
+        help="Model id for openai; defaults to the provider's own default.",
     )
     p.add_argument(
         "--max-cost-usd",
@@ -93,10 +93,6 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _make_provider(name: str, model: str | None) -> LLMProvider:
-    if name == "claude":
-        from .triage import ClaudeProvider
-
-        return ClaudeProvider(model) if model else ClaudeProvider()
     if name == "openai":
         from .triage import OpenAIProvider
 

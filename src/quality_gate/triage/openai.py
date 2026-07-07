@@ -30,5 +30,7 @@ class OpenAIProvider:
             ],
         )
         text = resp.choices[0].message.content or ""
-        usage = resp.usage
-        return LLMResponse(text, usage.prompt_tokens, usage.completion_tokens)
+        usage = resp.usage  # the SDK types this as optional; absent on some responses
+        prompt_tokens = usage.prompt_tokens if usage else 0
+        completion_tokens = usage.completion_tokens if usage else 0
+        return LLMResponse(text, prompt_tokens, completion_tokens)

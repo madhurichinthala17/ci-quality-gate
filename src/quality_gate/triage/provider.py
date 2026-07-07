@@ -2,7 +2,7 @@
 
 `LLMProvider` is the port; `FakeProvider` is a deterministic, offline, zero-cost
 implementation used by every test (no API key, no spend). Real providers
-(ClaudeProvider, OpenAIProvider) implement the same Protocol and are constructed
+OpenAIProvider implements the same Protocol and is constructed
 only by the composition root.
 """
 
@@ -31,8 +31,6 @@ class LLMProvider(Protocol):
 # verify against current OpenAI pricing before relying on the dollar figures.
 PRICES: dict[str, tuple[float, float]] = {
     "fake-1": (0.0, 0.0),
-    "claude-opus-4-8": (5.0, 25.0),
-    "claude-haiku-4-5": (1.0, 5.0),
     "gpt-4o-mini": (0.15, 0.60),
     "gpt-4o": (2.50, 10.00),
 }
