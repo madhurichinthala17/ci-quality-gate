@@ -10,10 +10,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
-from .flake import SqliteHistoryStore, evaluate
+from .flake import LibSqlHistoryStore, SqliteHistoryStore, evaluate
 from .gate import GateConfig, parse_coverage, run_gate
 from .gate.report import GateReport, Verdict
 from .parser import parse_report
@@ -27,7 +28,17 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--junit", required=True, help="Path to the JUnit XML test report.")
     p.add_argument("--coverage", help="Path to coverage.xml (Cobertura format). Optional.")
-    p.add_argument("--history", default="gate-history.db", help="SQLite history DB path.")
+    p.add_argument(
+        "--history",
+        default="gate-history.db",
+        help="Local SQLite history DB path (used when no Turso URL is configured).",
+    )
+    p.add_argument(
+        "--history-url",
+        default=None,
+        help="Turso/libSQL database URL for durable cloud history "
+        "(or set TURSO_DATABASE_URL). The auth token is read from TURSO_AUTH_TOKEN.",
+    )
     p.add_argument("--build-id", help="Identifier for this build (optional).")
     p.add_argument("--report", default="gate-report.json", help="Where to write the JSON verdict.")
     p.add_argument(
@@ -92,6 +103,28 @@ def _build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _make_store(
+    history_path: str, history_url: str | None
+) -> SqliteHistoryStore | LibSqlHistoryStore:
+    """Pick the history adapter: durable Turso when configured, else local SQLite.
+
+    The token is read from the environment only — never a CLI arg — so it can't leak
+    into process listings or CI logs. A URL with no token is a misconfiguration and
+    fails loudly rather than silently falling back to a throwaway local file.
+    """
+    url = history_url or os.environ.get("TURSO_DATABASE_URL")
+    token = os.environ.get("TURSO_AUTH_TOKEN")
+    if url and token:
+        return LibSqlHistoryStore(url, token)
+    if url and not token:
+        raise SystemExit(
+            "Turso URL is set but TURSO_AUTH_TOKEN is missing. "
+            "Set the token in the environment (never as a CLI arg), "
+            "or unset the URL to use local SQLite."
+        )
+    return SqliteHistoryStore(history_path)
+
+
 def _make_provider(name: str, model: str | None) -> LLMProvider:
     if name == "openai":
         from .triage import OpenAIProvider
@@ -135,7 +168,7 @@ def main(argv: list[str] | None = None) -> int:
         max_escape_rate=args.max_escape_rate,
     )
 
-    with SqliteHistoryStore(args.history) as store:
+    with _make_store(args.history, args.history_url) as store:
         flake = evaluate(store, run, build_id=args.build_id)
         report = run_gate(run, flake, coverage=coverage, config=config, store=store)
 

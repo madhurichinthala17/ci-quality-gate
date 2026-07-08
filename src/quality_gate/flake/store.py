@@ -1,9 +1,10 @@
 """Build-history persistence — the I/O adapter layer for flake detection.
 
-`HistoryStore` is the interface (port) the engine depends on; `SqliteHistoryStore`
-is the concrete implementation (adapter). Swapping to Postgres later means writing
-another class that satisfies this Protocol — the engine, detector, and gate never
-change.
+`HistoryStore` is the interface (port) the engine depends on. Two adapters implement
+it: `SqliteHistoryStore` (a local file, zero setup) and `LibSqlHistoryStore` (Turso /
+libSQL in the cloud, durable across CI runs). Because libSQL speaks SQLite's dialect,
+both adapters share all their SQL via `_SqlHistoryStore`; they differ only in how the
+connection is opened. The engine, detector, and gate never change.
 """
 
 from __future__ import annotations
@@ -11,13 +12,13 @@ from __future__ import annotations
 import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Protocol
+from typing import Any, Protocol
 
 from ..parser.models import Status, TestRun
 
 
 class HistoryStore(Protocol):
-    """What the engine needs from persistence — nothing about SQLite leaks here."""
+    """What the engine needs from persistence — no storage details leak here."""
 
     def record_run(self, run: TestRun, build_id: str | None = None) -> int: ...
     def window(self, test_id: str, n: int) -> list[Status]: ...
@@ -50,18 +51,25 @@ def _now() -> str:
     return datetime.now(UTC).isoformat()
 
 
-class SqliteHistoryStore:
-    """SQLite-backed history — a single file on disk. Implements HistoryStore."""
+class _SqlHistoryStore:
+    """Shared SQL over a sqlite3-compatible connection (stdlib sqlite3 or libSQL).
 
-    def __init__(self, db_path: str | Path = "gate-history.db") -> None:
-        self._conn = sqlite3.connect(str(db_path))
+    Subclasses set ``self._conn`` in __init__, then call ``self._apply_schema()``.
+    Every method below is dialect-identical, so the local and cloud adapters differ
+    only in how they connect. ``_conn`` is typed ``Any`` because it may be either a
+    ``sqlite3.Connection`` or a libSQL connection — both expose the same DB-API surface.
+    """
+
+    _conn: Any
+
+    def _apply_schema(self) -> None:
         self._conn.executescript(_SCHEMA)
         self._conn.commit()
 
     def close(self) -> None:
         self._conn.close()
 
-    def __enter__(self) -> SqliteHistoryStore:
+    def __enter__(self) -> _SqlHistoryStore:
         return self
 
     def __exit__(self, *exc: object) -> None:
@@ -75,7 +83,7 @@ class SqliteHistoryStore:
             (build_id or f"build-{ts}", ts),
         )
         build_ord = cur.lastrowid
-        assert build_ord is not None  # SQLite sets lastrowid after an INSERT
+        assert build_ord is not None  # the driver sets lastrowid after an INSERT
         self._conn.executemany(
             "INSERT INTO test_runs(build, test_id, status) VALUES (?, ?, ?)",
             [(build_ord, r.id, r.status.value) for r in run.results],
@@ -109,3 +117,29 @@ class SqliteHistoryStore:
     def release(self, test_id: str) -> None:
         self._conn.execute("DELETE FROM quarantine WHERE test_id = ?", (test_id,))
         self._conn.commit()
+
+
+class SqliteHistoryStore(_SqlHistoryStore):
+    """SQLite-backed history — a single file on disk, zero setup. Implements HistoryStore."""
+
+    def __init__(self, db_path: str | Path = "gate-history.db") -> None:
+        self._conn = sqlite3.connect(str(db_path))
+        self._apply_schema()
+
+
+class LibSqlHistoryStore(_SqlHistoryStore):
+    """Turso / libSQL-backed history — durable across CI runs. Implements HistoryStore.
+
+    libSQL speaks SQLite's dialect, so all SQL is inherited unchanged; only the
+    connection differs (a remote URL + auth token instead of a local file).
+    Credentials are passed in by the caller (the CLI reads them from the environment)
+    and are never hardcoded or logged.
+    """
+
+    def __init__(self, url: str, auth_token: str) -> None:
+        import libsql  # lazy: the optional 'turso' extra, only needed for cloud history
+
+        # Remote-only: every query hits Turso directly — no local replica to sync,
+        # which suits an ephemeral CI runner.
+        self._conn = libsql.connect(database=url, auth_token=auth_token)
+        self._apply_schema()

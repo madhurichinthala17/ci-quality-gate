@@ -12,7 +12,7 @@ from .detector import (
     is_consistent,
 )
 from .engine import FlakeReport, evaluate
-from .store import HistoryStore, SqliteHistoryStore
+from .store import HistoryStore, LibSqlHistoryStore, SqliteHistoryStore
 
 __all__ = [
     "Verdict",
@@ -26,4 +26,5 @@ __all__ = [
     "FlakeReport",
     "HistoryStore",
     "SqliteHistoryStore",
+    "LibSqlHistoryStore",
 ]

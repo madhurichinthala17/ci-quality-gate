@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from quality_gate.flake.store import SqliteHistoryStore
+from quality_gate.flake.store import LibSqlHistoryStore, SqliteHistoryStore
 from quality_gate.parser.models import Status, TestResult, TestRun
 
 
@@ -41,6 +41,22 @@ def test_quarantine_roundtrip_is_idempotent(tmp_path):
     assert store.quarantined() == set()
     store.quarantine("t::a")
     store.quarantine("t::a")  # inserting twice is a no-op
+    assert store.quarantined() == {"t::a"}
+    store.release("t::a")
+    assert store.quarantined() == set()
+
+
+def test_libsql_store_runs_the_same_sql_in_memory():
+    """The Turso adapter shares all SQL with the SQLite one; ':memory:' exercises the
+    real libSQL driver offline, so this proves the cloud store behaves identically
+    without needing a Turso account or network."""
+    store = LibSqlHistoryStore(":memory:", "dummy-token")  # token ignored for a local db
+    store.record_run(_run("t::a", Status.PASSED))
+    store.record_run(_run("t::a", Status.FAILED))
+    assert store.window("t::a", 10) == [Status.FAILED, Status.PASSED]  # newest first
+    assert store.all_test_ids() == ["t::a"]
+
+    store.quarantine("t::a")
     assert store.quarantined() == {"t::a"}
     store.release("t::a")
     assert store.quarantined() == set()

@@ -12,8 +12,6 @@ permissions:
 jobs:
   quality-gate:
     runs-on: ubuntu-latest
-    env:
-      PYTHONPATH: src
     steps:
       - uses: actions/checkout@v4
 
@@ -21,8 +19,19 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: pip install pytest pytest-cov allure-pytest
+      # Install the package the real way (editable + dev extras), so CI exercises
+      # the same install path a user runs — no PYTHONPATH hack. dev brings pytest,
+      # pytest-cov, allure-pytest, ruff, and mypy.
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      # Enforce the gate's own code quality before it judges anyone else's.
+      # These block the job on failure — lint/type errors are defects too.
+      - name: Lint & type-check
+        run: |
+          ruff check src tests
+          ruff format --check src tests
+          mypy
 
       # Persist mutating gate state (flake history + metrics history) across runs.
       # A unique key saves a fresh cache each run; restore-keys pulls the most
@@ -48,9 +57,11 @@ jobs:
 
       # The gate decides pass/fail and exits non-zero on FAIL, turning the PR
       # check red. Triage runs offline (fake) so CI is green without secrets.
-      # Triage uses OpenAI when --provider openai is set. To enable it in CI, add
-      # an OPENAI_API_KEY repository secret; it is already exposed on this step.
+      # To switch to live triage, add an OPENAI_API_KEY repository secret and
+      # change --provider to openai; the key is exposed to this step below.
       - name: Quality gate
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python -m quality_gate \
             --junit junit.xml \

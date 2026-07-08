@@ -103,14 +103,27 @@ python -m quality_gate --junit junit.xml --triage --provider openai \
 
 The key is read from the environment by the SDK — it never touches the code or the repo. In CI, add it as an `OPENAI_API_KEY` repository secret.
 
+### Durable cloud history (optional)
+
+Flake detection needs history to persist *between* CI runs. By default the gate writes a local `gate-history.db` (SQLite) — perfect for local dev, but on ephemeral CI runners that file doesn't survive. Point it at [Turso](https://turso.tech) (libSQL — SQLite's dialect in the cloud) and the history becomes durable:
+
+```bash
+export TURSO_DATABASE_URL=libsql://<your-db>.turso.io
+export TURSO_AUTH_TOKEN=<your-token>        # read from env only, never a CLI flag
+
+python -m quality_gate --junit junit.xml --history-url "$TURSO_DATABASE_URL"
+```
+
+The store is chosen behind the `HistoryStore` protocol: Turso when a URL **and** token are present, local SQLite otherwise. libSQL speaks SQLite's dialect, so both adapters run identical SQL — only the connection differs. Install the extra with `pip install -e ".[turso]"`.
+
 ## Development
 
 ```bash
 ruff check src tests    # lint + import order
 mypy                    # static type check
-pytest -q               # 61 tests, offline, deterministic
+pytest -q               # 65 tests, offline, deterministic
 ```
 
 ## Tech
 
-Python 3.12 · standard library core · OpenAI API (optional) · pytest · pytest-cov · JUnit XML · Allure · GitHub Actions · GitHub Pages · ruff · mypy · hatchling
+Python 3.12 · standard library core · OpenAI API (optional) · Turso / libSQL (optional) · pytest · pytest-cov · JUnit XML · Allure · GitHub Actions · GitHub Pages · ruff · mypy · hatchling
